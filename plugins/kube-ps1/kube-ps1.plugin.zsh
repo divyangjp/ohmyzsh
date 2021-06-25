@@ -38,6 +38,7 @@ KUBE_PS1_NS_COLOR="${KUBE_PS1_NS_COLOR-cyan}"
 KUBE_PS1_BG_COLOR="${KUBE_PS1_BG_COLOR}"
 KUBE_PS1_KUBECONFIG_CACHE="${KUBECONFIG}"
 KUBE_PS1_DISABLE_PATH="${HOME}/.kube/kube-ps1/disabled"
+KUBE_PS1_COLOR_PATH="${HOME}/.kube/kube-ps1/color"
 KUBE_PS1_LAST_TIME=0
 KUBE_PS1_CLUSTER_FUNCTION="${KUBE_PS1_CLUSTER_FUNCTION}"
 KUBE_PS1_NAMESPACE_FUNCTION="${KUBE_PS1_NAMESPACE_FUNCTION}"
@@ -48,6 +49,16 @@ if [ "${ZSH_VERSION-}" ]; then
 elif [ "${BASH_VERSION-}" ]; then
   KUBE_PS1_SHELL="bash"
 fi
+
+_kube_ps1_prod_colors() {
+  if [[ !-f "${KUBE_PS1_COLOR_PATH}" ]]; then
+    mkdir -p -- "$(dirname "${KUBE_PS1_COLOR_PATH}")"
+    touch -- "${KUBE_PS1_COLOR_PATH}"
+  fi
+  echo "KUBE_PS1_CTX_COLOR='yellow'" >> "${KUBE_PS1_COLOR_PATH}"
+  echo "KUBE_PS1_NS_COLOR='green'" >> "${KUBE_PS1_COLOR_PATH}"
+  echo "KUBE_PS1_BG_COLOR='red'" >> "${KUBE_PS1_COLOR_PATH}"
+}
 
 _kube_ps1_init() {
   [[ -f "${KUBE_PS1_DISABLE_PATH}" ]] && KUBE_PS1_ENABLED=off
@@ -303,6 +314,8 @@ kubeon() {
     _kubeon_usage
   elif [[ "${1}" == '-g' || "${1}" == '--global' ]]; then
     rm -f -- "${KUBE_PS1_DISABLE_PATH}"
+  elif [[ "${1}" == '--prod' ]]; then
+    _kube_ps1_prod_colors
   elif [[ "$#" -ne 0 ]]; then
     echo -e "error: unrecognized flag ${1}\\n"
     _kubeon_usage
@@ -318,6 +331,8 @@ kubeoff() {
   elif [[ "${1}" == '-g' || "${1}" == '--global' ]]; then
     mkdir -p -- "$(dirname "${KUBE_PS1_DISABLE_PATH}")"
     touch -- "${KUBE_PS1_DISABLE_PATH}"
+  elif [[ "${1}" == '--prod' ]]; then
+    rm -f -- "${KUBE_PS1_COLOR_PATH}"
   elif [[ $# -ne 0 ]]; then
     echo "error: unrecognized flag ${1}" >&2
     _kubeoff_usage
